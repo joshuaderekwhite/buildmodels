@@ -5,15 +5,7 @@
 \title{Perform a grid search for the provided tuning parameters using k-fold
 cross validation}
 \usage{
-gridCV(
-  data,
-  predictor,
-  method,
-  method.parameters = list(),
-  folds = 10,
-  tune.parameters = list(),
-  pred.parameters = list()
-)
+gridCV(data, predictor, model, folds = 10)
 }
 \arguments{
 \item{data}{Input to the model in a data frame format}
@@ -21,20 +13,20 @@ gridCV(
 \item{predictor}{A string of the vector of the validation set that contains
 the true values of the dependent variable.}
 
-\item{method}{The function call used to learn the model}
-
-\item{method.parameters}{Additional parameters passed through to the method
-to learn the model. This should not include parameters that are going to be
-predicted.}
-
 \item{folds}{The number of folds in the cross validation method.
 Default is 10.}
 
-\item{tune.parameters}{Parameters that will be predicted based on the cross-
+\item{method}{The function call used to learn the model}
+
+\item{model$method.parameters}{Additional parameters passed through to the method
+to learn the model. This should not include parameters that are going to be
+predicted.}
+
+\item{model$tune.parameters}{Parameters that will be predicted based on the cross-
 validation accuracy. This should be passed through as a list with each of
 the objects equal to an array of values to test.}
 
-\item{pred.parameters}{Parameters required to use the predict function on
+\item{model$pred.parameters}{Parameters required to use the predict function on
 the method type. There is no need to pass values for the model or the data,
 they are already provided.}
 }
@@ -46,13 +38,13 @@ the tune.grid object.
 }
 \description{
 For a given method, the values will be tuned systematically by iterating
-through each of the values provided in the tune.parameters and compared to
-all of the other tune.parameters. The hyper parameters are the tuning
+through each of the values provided in the model$tune.parameters and compared to
+all of the other model$tune.parameters. The hyper parameters are the tuning
 parameter values with the highest accuracy value.
 }
 \examples{
 svm.radial.hyper <- gridCV(
-   method = svm, method.parameters = list(kernel="radial"), folds = 4,
+   method = svm, model$method.parameters = list(kernel="radial"), folds = 4,
    data = weather.train, predictor = "RainTomorrow", 
    tune = list("gamma" = 10^(1:3), "cost" = 10^(-1:0))
    )
