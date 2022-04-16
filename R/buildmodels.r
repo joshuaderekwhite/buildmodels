@@ -32,10 +32,16 @@ buildmodels <- function(predictor, train.data, test.data, models, folds=4){
     for (model in models){
         model$tuned <- gridCV(train.data, predictor, model, folds)
         
-        model$model <- do.call(model$method, append(list(formula = Species~., data = iris.train), 
-            append(model$method.parameters, model$tuned$parameters)))
+        model$model <- do.call(model$method, appends(
+            formula = formula(paste(predictor,"~.")), 
+            data = train.data, 
+            model$method.parameters, 
+            model$tuned$parameters,
+            models$pred.parameters))
 
         model$predict <- predict(model$model, newdata = test.data)
+        model$accuracy <- mean(test.data[,predictor] == model$predict)
+        model$confusion <- table(test.data[,predictor], model$predict)
 
         models[[i]] <- model
         i <- i + 1

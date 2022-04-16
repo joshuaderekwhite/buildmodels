@@ -74,20 +74,20 @@ gridCV <- function(data, predictor, model, folds=10){
         acc <- 0
         for (fold in folds){
             if (length(model$method.parameters) + length(model$tune.parameters) > 0){
-                cv.model <- do.call(model$method, append(list(
+                cv.model <- do.call(model$method, appends(
                 formula(paste(predictor,"~.")),
-                data = data[-fold,]), 
-                append(model$method.parameters,
-                as.list(tune.grid[i,])[1:length(model$tune.parameters)])
+                data = data[-fold,], 
+                model$method.parameters,
+                as.list(tune.grid[i,])[1:length(model$tune.parameters)]
                 ))
             }
             else {
-                cv.model <- do.call(model$method, append(list(
+                cv.model <- do.call(model$method, appends(
                 formula(paste(predictor,"~.")),
-                data = data[-fold,])))
+                data = data[-fold,]))
             }
             if (exists("pred.parameters", model)){
-                pred <- do.call("predict", append(list(model, newdata = data[fold,]), 
+                pred <- do.call("predict", appends(model, newdata = data[fold,], 
                     eval(model$pred.parameters)))
                 if (exists(model$pred.parameters$post)){
                     pred <- pred[quote(model$pred.parameters$post)]
@@ -105,7 +105,6 @@ gridCV <- function(data, predictor, model, folds=10){
     tune.grid <- tune.grid %>% arrange(-accuracy)
 
     if (ncol(tune.grid) <= 2){
-        param <- colnames(tune.grid)[1]
         output <- list(
             parameters = as.list(setNames(tune.grid[1,1:(ncol(tune.grid)-1)], colnames(tune.grid)[1])), 
             accuracy = tune.grid[1,ncol(tune.grid)], 
