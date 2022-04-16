@@ -66,7 +66,7 @@ gridCV <- function(data, predictor, method, method.parameters=list(), folds=10,
 
     # Create folds and tuning grid
     folds <- createFolds(data[[predictor]], k = folds)
-    tune.grid <- expand.grid(tune) 
+    tune.grid <- expand.grid(tune.parameters) 
     if (nrow(tune.grid) > 0) tune.grid <- tune.grid %>% mutate(accuracy = NA)
     print("Tuning...")
 
@@ -74,12 +74,12 @@ gridCV <- function(data, predictor, method, method.parameters=list(), folds=10,
     for (i in 1:nrow(tune.grid)) {
         acc <- 0
         for (fold in folds){
-            if (length(method.parameters) + length(tune) > 0){
+            if (length(method.parameters) + length(tune.parameters) > 0){
                 model <- do.call(method, append(list(
                 formula(paste(predictor,"~.")),
                 data = data[-fold,]), 
                 append(method.parameters,
-                as.list(tune.grid[i,])[1:length(tune)])
+                as.list(tune.grid[i,])[1:length(tune.parameters)])
                 ))
             }
             else {
@@ -105,6 +105,18 @@ gridCV <- function(data, predictor, method, method.parameters=list(), folds=10,
     tune.grid <- tune.grid %>% arrange(-accuracy)
     print(tune.grid)
 
-    output <- append(tune.grid[1,], list(tune.grid = tune.grid))
+    if (ncol(tune.grid) <= 2){
+        param <- colnames(tune.grid)[1]
+        output <- list(
+            parameters = as.list(setNames(tune.grid[1,1:(ncol(tune.grid)-1)], colnames(tune.grid)[1])), 
+            accuracy = tune.grid[1,ncol(tune.grid)], 
+            tune.grid = tune.grid)
+    }
+    else {
+        output <- list(
+            parameters = as.list(tune.grid[1,1:(ncol(tune.grid)-1)]), 
+            accuracy = tune.grid[1,ncol(tune.grid)], 
+            tune.grid = tune.grid)
+    }
     return(output)
 }

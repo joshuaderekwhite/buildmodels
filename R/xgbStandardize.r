@@ -23,11 +23,13 @@
 #' pred.xgb <- predict(model.xgb, newdata=data)
 #' prob.xgb <- predict(model.xgb, newdata=data, decision.values=TRUE)
 
-require(xgboost)
-require(dplyr)
-setClass("xgb.standard")
-
 xgbStandardize <- function(formula, data, ...) {
+    require(xgboost)
+    require(dplyr)
+    require(methods)
+    require(rlang)
+    setClass("xgb.standard")
+
     data.ready <- xgb.DMatrix(
         data = model.matrix(~., data=data %>% select(-!!as.character(formula[[2]])))[,-1] %>%
             as.matrix(),
@@ -39,30 +41,30 @@ xgbStandardize <- function(formula, data, ...) {
     class(model) <- "xgb.standard"
     model$call <- call2("xgbStandardize", data = quote(data.ready), !!!list(...))
     return(model)
+
+    setMethod("predict", signature(object = "xgb.standard"),
+        function(object, newdata, decision.values=FALSE, ...){
+            require(xgboost)
+            data.ready <- xgb.DMatrix(
+                data = model.matrix(~., data=newdata %>% select(-!!object$predictor))[,-1] %>%
+                    as.matrix(),
+                label = as.numeric(newdata[,object$predictor]) - 1 %>% as.vector()
+            )
+            class(object) <- "xgb.Booster"
+            pred <- predict(object, data.ready, ...)
+            if(decision.values){
+                return(pred)
+            }
+            else{
+                return(as.factor(object$predictor.factors[round(pred)+1]))
+            }
+        }
+    )
+
+    setMethod("xgb.importance", signature(model="xgb.standard"),
+        function(model){
+            class(model) <- "xgb.Booster"
+            return(callGeneric(model=model))
+        }
+    )
 }
-setMethod("predict", signature(object = "xgb.standard"),
-    function(object, newdata, decision.values=FALSE, ...){
-        require(xgboost)
-        data.ready <- xgb.DMatrix(
-            data = model.matrix(~., data=newdata %>% select(-!!object$predictor))[,-1] %>%
-                as.matrix(),
-            label = as.numeric(newdata[,object$predictor]) - 1 %>% as.vector()
-        )
-        class(object) <- "xgb.Booster"
-        pred <- predict(object, data.ready, ...)
-        if(decision.values){
-            return(pred)
-        }
-        else{
-            return(as.factor(object$predictor.factors[round(pred)+1]))
-        }
-    }
-)
-#
-#setMethod("xgb.importance", signature(model = "xgb.standard"),
-#    function(model, ...){
-#        require(xgboost)
-#        class(model) <- "xgb.Booster"
-#        return(xgb.importance(model=model, ...))
-#    }
-#)
