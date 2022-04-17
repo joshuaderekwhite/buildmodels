@@ -97,7 +97,7 @@ gridCV <- function(data, predictor, model, folds=10){
                 pred <- predict(cv.model, newdata = data[fold,])
             }
             # MSE for regression; (FPR+FNR) for classification
-            actual <- unlist(data[,predictor])
+            actual <- unlist(data[fold,predictor])
             if (is.numeric(actual)) {
                 err <- err + mean((actual - pred)^2)
             } else {
