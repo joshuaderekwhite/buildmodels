@@ -52,7 +52,7 @@ buildmodels <- function(predictor, train.data, test.data, models, bin=list(), fo
         # binned classification (accuracy (binned), confussion (binned))
         # regression (MSE)
         # binned regression (accuracy (binned), MSE (unbinned), confusion (binned))
-        if (!is.numeric(test.data[,predictor])) { # classification
+        if (!is.numeric(unlist(test.data[,predictor]))) { # classification
             if (length(bin) > 0) { # binned
                 pred <- do.call(bin[[1]], appends(pred, bin[-1]))
                 actual <- do.call(bin[[1]], appends(test.data[,predictor], bin[-1])) 
