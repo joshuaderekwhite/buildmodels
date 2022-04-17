@@ -23,7 +23,7 @@ to learn the model. This should not include parameters that are going to be
 predicted.}
 
 \item{model$tune.parameters}{Parameters that will be predicted based on the cross-
-validation accuracy. This should be passed through as a list with each of
+validation error. This should be passed through as a list with each of
 the objects equal to an array of values to test.}
 
 \item{model$pred.parameters}{Parameters required to use the predict function on
@@ -32,15 +32,15 @@ they are already provided.}
 }
 \value{
 A list with the values of the hyper parameters stored as the parameter
-object. Also the overall cross-validated accuracy is reported as the accuracy
-object. And all of the grid values and their accuracies are reported as
+object. Also the overall cross-validated error is reported as the error
+object. And all of the grid values and their errors are reported as
 the tune.grid object.
 }
 \description{
 For a given method, the values will be tuned systematically by iterating
 through each of the values provided in the model$tune.parameters and compared to
 all of the other model$tune.parameters. The hyper parameters are the tuning
-parameter values with the highest accuracy value.
+parameter values with the highest error value.
 }
 \examples{
 svm.radial.hyper <- gridCV(
@@ -50,25 +50,25 @@ svm.radial.hyper <- gridCV(
    )
 
 ## [1] "Tuning..."
-##     gamma      cost  accuracy 
+##     gamma      cost  error 
 ## 0.1000000 0.1000000 0.8309324 
-##    gamma     cost accuracy 
+##    gamma     cost error 
 ##     1.00     0.10     0.78 
-##    gamma     cost accuracy 
+##    gamma     cost error 
 ##    10.00     0.10     0.78 
-##    gamma     cost accuracy 
+##    gamma     cost error 
 ##   100.00     0.10     0.78 
-##    gamma     cost accuracy 
+##    gamma     cost error 
 ##  1000.00     0.10     0.78 
-##    gamma     cost accuracy 
+##    gamma     cost error 
 ## 0.100000 1.000000 0.852933 
-##    gamma     cost accuracy 
+##    gamma     cost error 
 ##     1.00     1.00     0.78 
-##    gamma     cost accuracy 
+##    gamma     cost error 
 ##    10.00     1.00     0.78 
-##    gamma     cost accuracy 
+##    gamma     cost error 
 ##   100.00     1.00     0.78 
-##    gamma     cost accuracy 
+##    gamma     cost error 
 ##  1000.00     1.00     0.78 
 }
 \seealso{

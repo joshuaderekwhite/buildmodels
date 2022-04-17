@@ -4,7 +4,7 @@
 \alias{xgbStandardize}
 \title{Standardize the format of XGBoost}
 \usage{
-xgbStandardize(formula, data, ...)
+xgbStandardize(formula, data, .round = 0, ...)
 }
 \arguments{
 \item{formula}{Model formula used to learn or predict the model}
@@ -22,6 +22,11 @@ frame to learn a model, to use the gridCV function in the buildmodels
 package and to make predictions.
 }
 \details{
+If numeric values are passed as the dependent variable in the formula,
+it is converted to a factor rounded to the nearest integer. The rounding
+can be changed by using the @param .round parameter and passing to it the
+digits from the @seealso \code{\link[base:Round]{base::round()}} function.
+
 The xgbStandardize also overrides the behavior of the prediction function
 for an xgb.standard model. This allows for the pass through of data frame
 as the data object, and provides the prediction probabilities if

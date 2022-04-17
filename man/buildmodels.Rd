@@ -4,7 +4,7 @@
 \alias{buildmodels}
 \title{Predict the optimize model of each of the listed models}
 \usage{
-buildmodels(predictor, train.data, test.data, models, folds = 4)
+buildmodels(predictor, train.data, test.data, models, bin = list(), folds = 4)
 }
 \arguments{
 \item{predictor}{Prediction variable used to learn or predict the model}

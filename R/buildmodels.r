@@ -27,11 +27,13 @@
 #' )
 #' models <- buildmodels("Species", iris.train, iris.test, models)
 
-buildmodels <- function(predictor, train.data, test.data, models, folds=4){
+buildmodels <- function(predictor, train.data, test.data, models, bin=list(), folds=4){
     i <- 1
     for (model in models){
+        # Optimize Hyper-Parameters for each model from training data
         model$tuned <- gridCV(train.data, predictor, model, folds)
         
+        # Learn the provided models
         model$model <- do.call(model$method, appends(
             formula = formula(paste(predictor,"~.")), 
             data = train.data, 
@@ -39,9 +41,42 @@ buildmodels <- function(predictor, train.data, test.data, models, folds=4){
             model$tuned$parameters,
             models$pred.parameters))
 
+        # Predict the test data from each learned model
         model$predict <- predict(model$model, newdata = test.data)
-        model$accuracy <- mean(test.data[,predictor] == model$predict)
-        model$confusion <- table(test.data[,predictor], model$predict)
+        if (!is.null(model$pred.parameters$round)) {
+            model$predict
+        }
+
+        # Capture the results of the prediction
+        # classification (accuracy, confusion)
+        # binned classification (accuracy (binned), confussion (binned))
+        # regression (MSE)
+        # binned regression (accuracy (binned), MSE (unbinned), confusion (binned))
+        if (!is.numeric(test.data[,predictor])) { # classification
+            if (length(bin) > 0) { # binned
+                pred <- do.call(bin[[1]], appends(pred, bin[-1]))
+                actual <- do.call(bin[[1]], appends(test.data[,predictor], bin[-1])) 
+            } else { #unbinned
+                predicted <- model$predict
+                actual <- test.data[,predictor]
+            }
+            model$results <- list(
+            accuracy = mean(test.data[,predictor] == model$predict),
+            confusion = table(test.data[,predictor], model$predict)
+        )} else { # regression
+            if (class(model$predict) == "factor") { # handle models that require factors
+                pred <- as.numeric(levels(model$predict))[as.numeric(model$predict)]
+            } else {
+                pred <- model$predict
+            }
+            model$results <- list(MSE = mean((test.data[,predictor] - pred)^2))
+            if (length(bin) > 0) { # binned
+                pred <- do.call(bin[[1]], appends(pred, bin[-1]))
+                actual <- do.call(bin[[1]], appends(test.data[,predictor], bin[-1])) 
+                model$results$accuracy <- mean(actual == pred)
+                model$results$confusion <- table(actual, pred)
+            }
+        }
 
         models[[i]] <- model
         i <- i + 1

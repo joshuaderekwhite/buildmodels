@@ -4,7 +4,7 @@
 #' For a given method, the values will be tuned systematically by iterating
 #' through each of the values provided in the model$tune.parameters and compared to
 #' all of the other model$tune.parameters. The hyper parameters are the tuning
-#' parameter values with the highest accuracy value.
+#' parameter values with the highest error value.
 #' 
 #' @param data Input to the model in a data frame format
 #' @param predictor A string of the vector of the validation set that contains
@@ -16,14 +16,14 @@
 #' @param folds The number of folds in the cross validation method.
 #'  Default is 10.
 #' @param model$tune.parameters Parameters that will be predicted based on the cross-
-#'  validation accuracy. This should be passed through as a list with each of
+#'  validation error. This should be passed through as a list with each of
 #'  the objects equal to an array of values to test.
 #' @param model$pred.parameters Parameters required to use the predict function on
 #'  the method type. There is no need to pass values for the model or the data,
 #'  they are already provided.
 #' @return A list with the values of the hyper parameters stored as the parameter
-#'  object. Also the overall cross-validated accuracy is reported as the accuracy
-#'  object. And all of the grid values and their accuracies are reported as
+#'  object. Also the overall cross-validated error is reported as the error
+#'  object. And all of the grid values and their errors are reported as
 #'  the tune.grid object.
 #' @keywords cross-validation
 #' @seealso [caret::train()]
@@ -36,25 +36,25 @@
 #'    )
 #' 
 #' ## [1] "Tuning..."
-#' ##     gamma      cost  accuracy 
+#' ##     gamma      cost  error 
 #' ## 0.1000000 0.1000000 0.8309324 
-#' ##    gamma     cost accuracy 
+#' ##    gamma     cost error 
 #' ##     1.00     0.10     0.78 
-#' ##    gamma     cost accuracy 
+#' ##    gamma     cost error 
 #' ##    10.00     0.10     0.78 
-#' ##    gamma     cost accuracy 
+#' ##    gamma     cost error 
 #' ##   100.00     0.10     0.78 
-#' ##    gamma     cost accuracy 
+#' ##    gamma     cost error 
 #' ##  1000.00     0.10     0.78 
-#' ##    gamma     cost accuracy 
+#' ##    gamma     cost error 
 #' ## 0.100000 1.000000 0.852933 
-#' ##    gamma     cost accuracy 
+#' ##    gamma     cost error 
 #' ##     1.00     1.00     0.78 
-#' ##    gamma     cost accuracy 
+#' ##    gamma     cost error 
 #' ##    10.00     1.00     0.78 
-#' ##    gamma     cost accuracy 
+#' ##    gamma     cost error 
 #' ##   100.00     1.00     0.78 
-#' ##    gamma     cost accuracy 
+#' ##    gamma     cost error 
 #' ##  1000.00     1.00     0.78 
 
 gridCV <- function(data, predictor, model, folds=10){
@@ -64,14 +64,14 @@ gridCV <- function(data, predictor, model, folds=10){
     # Create folds and tuning grid
     folds <- createFolds(data[[predictor]], k = folds)
     tune.grid <- expand.grid(model$tune.parameters) 
-    if (nrow(tune.grid) > 0) tune.grid <- tune.grid %>% mutate(accuracy = NA)
+    if (nrow(tune.grid) > 0) tune.grid <- tune.grid %>% mutate(error = NA)
     cat(paste("Tuning", model$name, "for", 
         paste(names(model$tune.parameters), collapse = ", "), "\n"))
     progress.bar <- txtProgressBar(style = 3)
 
     # Average the value of each fold
     for (i in 1:nrow(tune.grid)) {
-        acc <- 0
+        err <- 0
         for (fold in folds){
             if (length(model$method.parameters) + length(model$tune.parameters) > 0){
                 cv.model <- do.call(model$method, appends(
@@ -96,24 +96,29 @@ gridCV <- function(data, predictor, model, folds=10){
             else{
                 pred <- predict(cv.model, newdata = data[fold,])
             }
-            acc <- acc + mean(data[fold,predictor] == pred)
+            # MSE for regression; (FPR+FNR) for classification
+            if (is.numeric(data[,predictor])) {
+                err <- err + mean((data[fold,predictor] - pred)^2)
+            } else {
+                err <- err + mean(data[fold,predictor] != pred)
+            }
         }
-        tune.grid[i,"accuracy"] <- acc / length(folds)
+        tune.grid[i,"error"] <- err / length(folds)
         # Report progress of tuning here: setTxtProgressBar
         setTxtProgressBar(progress.bar, i/nrow(tune.grid))
     }
-    tune.grid <- tune.grid %>% arrange(-accuracy)
+    tune.grid <- tune.grid %>% arrange(error)
 
     if (ncol(tune.grid) <= 2){
         output <- list(
             parameters = as.list(setNames(tune.grid[1,1:(ncol(tune.grid)-1)], colnames(tune.grid)[1])), 
-            accuracy = tune.grid[1,ncol(tune.grid)], 
+            error = tune.grid[1,ncol(tune.grid)], 
             tune.grid = tune.grid)
     }
     else {
         output <- list(
             parameters = as.list(tune.grid[1,1:(ncol(tune.grid)-1)]), 
-            accuracy = tune.grid[1,ncol(tune.grid)], 
+            error = tune.grid[1,ncol(tune.grid)], 
             tune.grid = tune.grid)
     }
 
