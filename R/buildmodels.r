@@ -52,29 +52,26 @@ buildmodels <- function(predictor, train.data, test.data, models, bin=list(), fo
         # binned classification (accuracy (binned), confussion (binned))
         # regression (MSE)
         # binned regression (accuracy (binned), MSE (unbinned), confusion (binned))
-        if (!is.numeric(unlist(test.data[,predictor]))) { # classification
+        actual <- unlist(test.data[,predictor])
+        predicted <- model$predict
+        if (!is.numeric(actual)) { # classification
             if (length(bin) > 0) { # binned
-                pred <- do.call(bin[[1]], appends(pred, bin[-1]))
-                actual <- do.call(bin[[1]], appends(test.data[,predictor], bin[-1])) 
-            } else { #unbinned
-                predicted <- model$predict
-                actual <- test.data[,predictor]
+                predicted <- do.call(bin[[1]], appends(predicted, bin[-1]))
+                actual <- do.call(bin[[1]], appends(actual, bin[-1])) 
             }
             model$results <- list(
-            accuracy = mean(test.data[,predictor] == model$predict),
-            confusion = table(test.data[,predictor], model$predict)
+            accuracy = mean(actual == predicted),
+            confusion = table(actual, predicted)
         )} else { # regression
-            if (class(model$predict) == "factor") { # handle models that require factors
-                pred <- as.numeric(levels(model$predict))[as.numeric(model$predict)]
-            } else {
-                pred <- model$predict
+            if (class(predicted) == "factor") { # handle models that require factors
+                predicted <- as.numeric(levels(predicted))[as.numeric(predicted)]
             }
-            model$results <- list(MSE = mean((test.data[,predictor] - pred)^2))
+            model$results <- list(MSE = mean((actual - predicted)^2))
             if (length(bin) > 0) { # binned
-                pred <- do.call(bin[[1]], appends(pred, bin[-1]))
-                actual <- do.call(bin[[1]], appends(test.data[,predictor], bin[-1])) 
-                model$results$accuracy <- mean(actual == pred)
-                model$results$confusion <- table(actual, pred)
+                predicted <- do.call(bin[[1]], appends(predicted, bin[-1]))
+                actual <- do.call(bin[[1]], appends(actual, bin[-1])) 
+                model$results$accuracy <- mean(actual == predicted)
+                model$results$confusion <- table(actual, predicted)
             }
         }
 
