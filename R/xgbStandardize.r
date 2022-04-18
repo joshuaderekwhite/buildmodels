@@ -36,7 +36,7 @@ xgbStandardize <- function(formula, data, ...) {
     label <- data[,as.character(formula[[2]])]
     if (is.numeric(label %>% as.matrix())) {
         prediction.class <- "regression"
-        label <- label %>% as.matrix() %>% as.vector()
+        label <- unlist(label) %>% as.vector()
         predictor.factors <- NA
     } else {
         prediction.class <- "classification"
@@ -68,7 +68,7 @@ setMethod("predict", signature(object = "xgb.standard"),
         require(xgboost)
         label <- newdata[,object$predictor]
         if (is.numeric(label %>% as.matrix())) { # regression
-            label <- label %>% as.matrix() %>% as.vector()
+            label <- unlist(label) %>% as.vector()
         } else { # classification
             label <- as.numeric(label) - 1 %>% as.vector()
         }
@@ -79,8 +79,9 @@ setMethod("predict", signature(object = "xgb.standard"),
             label = label
         )
         class(object) <- "xgb.Booster"
-        pred <- predict(object, data.ready, ...)
-        if(decision.values | is.numeric(object$predictor)){
+        class(object$handle) <- "xgb.Booster.handle"
+        pred <- predict(object, newdata=data.ready, ...)
+        if(decision.values | object$prediction.class=="regression"){
             return(pred)
         }
         else{
