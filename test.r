@@ -50,6 +50,15 @@ models <- buildmodels("Sepal.Length", iris.train, iris.test, models, bin = list(
 return(models)
 }
 
+regressionModel2 <- function(...){
+models <- list(list(name = "Gradient Boosted", method = xgbStandardize, 
+        method.parameters = list(objective="reg:squarederror", verbose=0, 
+            num_class=6, nrounds=50), 
+        tune.parameters = list(max.depth = 1:4, eta = 10^(-4:-1))))
+models <- buildmodels("numberOfPassRushers", plays.train, plays.test, models, bin = list(round, digits = 0))
+return(models)
+}
+
 loadPackage("local")
 attach(iris)
 sample.iris <- sample(1:nrow(iris), nrow(iris)*0.7)

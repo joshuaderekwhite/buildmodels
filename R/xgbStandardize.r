@@ -21,13 +21,12 @@
 #' @return A model with the list values of xgboost with new values for
 #'  predictor and predictor.factors
 #' @keywords xgboost
-#' @seealso [xgboost::xgboost()]
 #' @export
 #' @examples
 #' model.xgb <- xgbStardize(status~., data, nrounds = 100, eta = 0.01)
 #' pred.xgb <- predict(model.xgb, newdata=data)
 #' prob.xgb <- predict(model.xgb, newdata=data, decision.values=TRUE)
-xgbStandardize <- function(formula, data, .round=0, ...) {
+xgbStandardize <- function(formula, data, ...) {
     require(xgboost)
     require(dplyr)
     require(methods)
@@ -35,16 +34,26 @@ xgbStandardize <- function(formula, data, .round=0, ...) {
 
     # Convert numeric data labels to factors
     label <- data[,as.character(formula[[2]])]
-    if (is.numeric(label)) label <- as.factor(round(sort(label),.round))
+    if (is.numeric(label %>% as.matrix())) {
+        prediction.class <- "regression"
+        label <- label %>% as.matrix() %>% as.vector()
+        predictor.factors <- NA
+    } else {
+        prediction.class <- "classification"
+        label <- as.numeric(label) - 1 %>% as.vector()
+        predictor.factors <- levels(label)
+    }
+    #if (is.numeric(label)) label <- as.factor(round(sort(label),.round))
 
     data.ready <- xgb.DMatrix(
         data = model.matrix(~., data=data %>% select(-!!as.character(formula[[2]])))[,-1] %>%
             as.matrix(),
-        label = as.numeric(label) - 1 %>% as.vector()
+        label = label
     )
     model <- do.call(xgboost, list(data = data.ready, ...))
     model$predictor <- as.character(formula[[2]])
-    model$predictor.factors <- levels(label)
+    model$predictor.factors <- predictor.factors
+    model$prediction.class <- prediction.class
     class(model) <- "xgb.standard"
     model$call <- call2("xgbStandardize", data = quote(data.ready), !!!list(...))
     return(model)
@@ -57,14 +66,21 @@ setClass("xgb.standard")
 setMethod("predict", signature(object = "xgb.standard"),
     function(object, newdata, decision.values=FALSE, ...){
         require(xgboost)
+        label <- newdata[,object$predictor]
+        if (is.numeric(label %>% as.matrix())) { # regression
+            label <- label %>% as.matrix() %>% as.vector()
+        } else { # classification
+            label <- as.numeric(label) - 1 %>% as.vector()
+        }
+
         data.ready <- xgb.DMatrix(
             data = model.matrix(~., data=newdata %>% select(-!!object$predictor))[,-1] %>%
                 as.matrix(),
-            label = as.numeric(newdata[,object$predictor]) - 1 %>% as.vector()
+            label = label
         )
         class(object) <- "xgb.Booster"
         pred <- predict(object, data.ready, ...)
-        if(decision.values){
+        if(decision.values | is.numeric(object$predictor)){
             return(pred)
         }
         else{
