@@ -1,6 +1,7 @@
 library(e1071)
 library(xgboost)
 library(randomForest)
+library(pscl)
 
 loadPackage <- function(base){
     switch(
@@ -51,9 +52,14 @@ return(models)
 }
 
 regressionModel2 <- function(...){
-models <- list(list(name = "Gradient Boosted", method = xgbStandardize, 
+models <- list(
+    list(name = "Hurdle", method = hurdle,
+        tune.parameters = list(dist = c("poisson", "negbin", "geometric"), 
+            zero.dist=c("binomial", "poisson", "negbin", "geometric"))),
+    list(name = "Gradient Boosted", method = xgbStandardize, 
         method.parameters = list(verbose=0, nrounds=50), 
-        tune.parameters = list(max.depth = 1:4, eta = 10^(-4:-1))))
+        tune.parameters = list(max.depth = 1:4, eta = 10^(-4:-1)))
+)
 models <- buildmodels("numberOfPassRushers", plays.train, plays.test, models, bin = list(round, digits = 0))
 return(models)
 }
