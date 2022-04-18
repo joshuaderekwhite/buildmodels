@@ -64,7 +64,8 @@ gridCV <- function(data, predictor, model, folds=10){
     # Create folds and tuning grid
     folds <- createFolds(data[[predictor]], k = folds)
     tune.grid <- expand.grid(model$tune.parameters) 
-    if (nrow(tune.grid) > 0) tune.grid <- tune.grid %>% mutate(error = NA)
+    if (nrow(tune.grid) > 0) {
+    tune.grid <- tune.grid %>% mutate(error = NA)
     cat(paste("Tuning", model$name, "for", 
         paste(names(model$tune.parameters), collapse = ", "), "\n"))
     progress.bar <- txtProgressBar(style = 3)
@@ -128,6 +129,9 @@ gridCV <- function(data, predictor, model, folds=10){
     cat(paste0("Optimal Parameters (",
         paste(paste(names(output$parameters),output$parameters, sep=": "), collapse = ", "), 
         ")\n\n"))
+    } else {
+        output <- list(output = "No Hyperparameters")
+    }
 
     return(output)
 }

@@ -52,8 +52,7 @@ return(models)
 
 regressionModel2 <- function(...){
 models <- list(list(name = "Gradient Boosted", method = xgbStandardize, 
-        method.parameters = list(objective="reg:squarederror", verbose=0, 
-            nrounds=50), 
+        method.parameters = list(verbose=0, nrounds=50), 
         tune.parameters = list(max.depth = 1:4, eta = 10^(-4:-1))))
 models <- buildmodels("numberOfPassRushers", plays.train, plays.test, models, bin = list(round, digits = 0))
 return(models)
@@ -74,7 +73,6 @@ load("c:/Users/joshu/OneDrive/Documents/Course Work/UCF/STA6704/Assignments/Proj
 plays.regression <- plays.regression %>%
     mutate(
         numberOfPassRushers = as.factor(numberOfPassRushers),
-        defendersInTheBox = as.factor(defendersInTheBox),
         quarter = as.factor(quarter),
         down = as.factor(down),
         possessionInd = as.factor(possessionInd)
